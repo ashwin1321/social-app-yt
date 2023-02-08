@@ -8,6 +8,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import { register } from "./controllers/auth.js";
 
 /* configurations */
 const __filename = fileURLToPath(import.meta.url); // to get the current file name
@@ -36,3 +37,17 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage }); // this is the middleware that will be used to upload the images
+
+/* routes */
+app.post("/auth/register", upload.single("picture"), register); // upload.single("picture") is the middleware that will be used to upload the images locally
+
+/* mongoose setup */
+const PORT = process.env.PORT || 6001;
+mongoose.set("strictQuery", false);
+
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then(() => {
+    app.listen(PORT, () => console.log(`Server running on port: ${PORT}`));
+  })
+  .catch((error) => console.log("no connection", error.message));
