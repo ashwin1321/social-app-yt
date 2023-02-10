@@ -10,7 +10,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import postRoutes from "./routes/postRoutes.js";
 import { register } from "./controllers/auth.js";
+import { createPost } from "./controllers/posts.js";
+import { verifyToken } from "./middleware/auth.js";
 
 /* configurations */
 const __filename = fileURLToPath(import.meta.url); // to get the current file name
@@ -42,11 +45,12 @@ const upload = multer({ storage }); // this is the middleware that will be used 
 
 /* routes with files */
 app.post("/auth/register", upload.single("picture"), register); // upload.single("picture") is the middleware that will be used to upload the images locally
+app.post("/posts", verifyToken, upload.single("picture"), createPost);
 
 /* other routes */
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
-
+app.use("/posts", postRoutes);
 /* mongoose setup */
 const PORT = process.env.PORT || 6001;
 mongoose.set("strictQuery", false);
