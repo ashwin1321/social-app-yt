@@ -18,53 +18,54 @@ import User from "./models/user.js";
 import Post from "./models/Post.js";
 import { users, posts } from "./data/index.js";
 
-/* configurations */
-const __filename = fileURLToPath(import.meta.url); // to get the current file name
-const __dirname = path.dirname(__filename); // to get the current directory name
-dotenv.config(); // to use the .env file
+// * CONFIGURATIONS */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config();
 const app = express();
-
-/* middlewares */
 app.use(express.json());
-app.use(helmet); // to secure the app by setting various HTTP headers
-app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })); // to allow cross-origin requests
-app.use(morgan("common")); // to log HTTP requests
-app.use(bodyParser.json({ limit: "30mb", extended: true })); // to parse JSON bodies
-app.use(bodyParser.urlencoded({ limit: "30mb", extended: true })); // to parse URL-encoded bodies
-app.use(cors()); // to allow cross-origin requests
-app.use("/assets", express.static(path.join(__dirname, "public/assets"))); // where the images will be stored
+app.use(helmet());
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
+app.use(morgan("common"));
+app.use(bodyParser.json({ limit: "30mb", extended: true }));
+app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
+app.use(cors());
+app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
-/* file storage */
+/* FILE STORAGE */
 const storage = multer.diskStorage({
-  destination: (req, res, file, cb) => {
-    cb(null, "public/assets"); // this is where the images will be stored
+  destination: function (req, file, cb) {
+    cb(null, "public/assets");
   },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname); // this is the name of the image
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
   },
 });
+const upload = multer({ storage });
 
-const upload = multer({ storage }); // this is the middleware that will be used to upload the images
-
-/* routes with files */
-app.post("/auth/register", upload.single("picture"), register); // upload.single("picture") is the middleware that will be used to upload the images locally
+/* ROUTES WITH FILES */
+app.post("/auth/register", upload.single("picture"), register);
 app.post("/posts", verifyToken, upload.single("picture"), createPost);
 
-/* other routes */
+/* ROUTES */
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
-/* mongoose setup */
+
+/* MONGOOSE SETUP */
 const PORT = process.env.PORT || 6001;
-mongoose.set("strictQuery", false);
 
+mongoose.set("strictQuery", true);
 mongoose
-  .connect(process.env.MONGO_URL)
+  .connect(process.env.MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
-    app.listen(PORT, () => console.log(`Server running on port: ${PORT}`));
+    app.listen(PORT, () => console.log(`Server Port: ${PORT}`));
 
-    //  Add Data once
+    /* ADD DATA ONE TIME */
     // User.insertMany(users);
     // Post.insertMany(posts);
   })
-  .catch((error) => console.log("no connection", error.message));
+  .catch((error) => console.log(`${error} did not connect`));
